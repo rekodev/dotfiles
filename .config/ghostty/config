@@ -1,0 +1,9 @@
+theme = Andromeda
+background-opacity = 0.8
+
+font-feature = -calt
+font-feature = -liga
+font-feature = -dlig
+
+window-height = 80
+window-width = 260
