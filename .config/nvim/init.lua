@@ -60,6 +60,9 @@ vim.filetype.add({
 		avdl = "avdl",
 	},
 })
+vim.api.nvim_create_autocmd("BufWinEnter", {
+	command = "set formatoptions-=cro",
+})
 
 -- Setup lazy.nvim
 require("lazy").setup({
