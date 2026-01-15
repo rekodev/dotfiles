@@ -134,9 +134,45 @@ require("lazy").setup({
 	},
 	{
 		"lewis6991/gitsigns.nvim",
-		opts = {
-			current_line_blame = true,
-		},
+		config = function()
+			require("gitsigns").setup({
+				current_line_blame = true,
+				gh = true,
+			})
+
+			vim.keymap.set("n", "<leader>gb", function()
+				local file = vim.fn.expand("%:p")
+				local lnum = vim.fn.line(".")
+				if file == "" then
+					vim.notify("No file", vim.log.levels.WARN)
+					return
+				end
+
+				local blame = vim.fn.system({ "git", "blame", "-L", ("%d,%d"):format(lnum, lnum), "--porcelain", file })
+				if vim.v.shell_error ~= 0 then
+					vim.notify("git blame failed:\n" .. blame, vim.log.levels.ERROR)
+					return
+				end
+
+				local sha = blame:match("^(%x+)")
+				if not sha or sha:match("^0+$") then
+					vim.notify("Could not parse sha", vim.log.levels.ERROR)
+					return
+				end
+
+				vim.notify("Opening " .. sha)
+				vim.fn.jobstart({ "gh", "browse", sha }, {
+					detach = true,
+					on_stderr = function(_, data)
+						if data and table.concat(data, ""):match("%S") then
+							vim.schedule(function()
+								vim.notify("gh error:\n" .. table.concat(data, "\n"), vim.log.levels.ERROR)
+							end)
+						end
+					end,
+				})
+			end, { desc = "Open blame commit in GitHub" })
+		end,
 	},
 	{
 		"nvim-treesitter/nvim-treesitter-context",
