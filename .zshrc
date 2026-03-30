@@ -3,6 +3,8 @@ ZSH_THEME="robbyrussell"
 
 plugins=(git)
 
+export GPG_TTY=$(tty)
+
 source $ZSH/oh-my-zsh.sh
 autoload -Uz compinit && compinit
 
