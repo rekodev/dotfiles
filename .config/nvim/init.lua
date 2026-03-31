@@ -10,7 +10,7 @@ vim.opt.relativenumber = true
 vim.opt.number = true
 vim.opt.tabstop = 4
 vim.opt.expandtab = true
-vim.opt.softtabstop = 4
+vim.opt.softtabstop = -1
 vim.opt.shiftwidth = 4
 vim.opt.clipboard = "unnamedplus"
 vim.opt.scrolloff = 10
@@ -37,7 +37,7 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
 -- Misc
-vim.highlight.priorities.semantic_tokens = 125
+vim.highlight.priorities.semantic_tokens = 75
 vim.diagnostic.config({ update_in_insert = true })
 vim.filetype.add({ extension = { avdl = "avdl" } })
 vim.api.nvim_create_autocmd("BufWinEnter", { command = "set formatoptions-=cro" })
@@ -89,41 +89,35 @@ vim.api.nvim_create_autocmd("PackChanged", {
 	end,
 })
 
--- Shared dependencies (added first so they're available to plugins below)
-vim.pack.add({
-	"https://github.com/nvim-lua/plenary.nvim",
-	"https://github.com/nvim-tree/nvim-web-devicons",
-	"https://github.com/MunifTanjim/nui.nvim",
-}, { load = true })
-
 -- Plugins
 vim.pack.add({
-	"https://github.com/williamboman/mason.nvim",
-	"https://github.com/hrsh7th/nvim-cmp",
+	"https://github.com/Isrothy/neominimap.nvim",
+	"https://github.com/MunifTanjim/nui.nvim",
+	"https://github.com/folke/ts-comments.nvim",
+	"https://github.com/github/copilot.vim",
 	"https://github.com/hrsh7th/cmp-nvim-lsp",
 	"https://github.com/hrsh7th/cmp-nvim-lsp-signature-help",
-	"https://github.com/neovim/nvim-lspconfig",
-	"https://github.com/lewis6991/gitsigns.nvim",
-	"https://github.com/nvim-treesitter/nvim-treesitter-context",
-	"https://github.com/nvim-treesitter/nvim-treesitter",
-	"https://github.com/nvim-telescope/telescope.nvim",
-	"https://github.com/nvim-telescope/telescope-fzf-native.nvim",
-	{ src = "https://github.com/nvim-telescope/telescope-live-grep-args.nvim", version = vim.version.range(">=1.0.0") },
-	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim", version = "v3.x" },
-	"https://github.com/windwp/nvim-autopairs",
-	"https://github.com/stevearc/conform.nvim",
-	"https://github.com/lukas-reineke/indent-blankline.nvim",
-	"https://github.com/tronikelis/ts-autotag.nvim",
-	"https://github.com/nvim-lualine/lualine.nvim",
-	"https://github.com/tronikelis/conflict-marker.nvim",
+	"https://github.com/hrsh7th/nvim-cmp",
 	"https://github.com/kdheepak/lazygit.nvim",
-	"https://github.com/github/copilot.vim",
-	{ src = "https://github.com/Isrothy/neominimap.nvim", version = vim.version.range(">=3.0.0, <4.0.0") },
+	"https://github.com/lewis6991/gitsigns.nvim",
+	"https://github.com/lukas-reineke/indent-blankline.nvim",
+	"https://github.com/neovim/nvim-lspconfig",
+	"https://github.com/nvim-lua/plenary.nvim",
+	"https://github.com/nvim-lualine/lualine.nvim",
+	"https://github.com/nvim-neo-tree/neo-tree.nvim",
+	"https://github.com/nvim-telescope/telescope-fzf-native.nvim",
+	"https://github.com/nvim-telescope/telescope-live-grep-args.nvim",
+	"https://github.com/nvim-telescope/telescope.nvim",
+	"https://github.com/nvim-tree/nvim-web-devicons",
+	"https://github.com/nvim-treesitter/nvim-treesitter-context",
 	"https://github.com/scottmckendry/cyberdream.nvim",
-}, { load = true })
-
-vim.pack.add({ "https://github.com/folke/ts-comments.nvim" }, { load = true })
-require("ts-comments").setup()
+	"https://github.com/stevearc/conform.nvim",
+	"https://github.com/tronikelis/conflict-marker.nvim",
+	"https://github.com/tronikelis/ts-autotag.nvim",
+	"https://github.com/williamboman/mason.nvim",
+	"https://github.com/windwp/nvim-autopairs",
+	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
+})
 
 -- mason
 require("mason").setup()
@@ -143,7 +137,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	callback = function(args)
 		local opts = { buffer = args.buf }
 		vim.keymap.set("n", "gr", require("telescope.builtin").lsp_references, opts)
-		vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+		vim.keymap.set("n", "gd", require("telescope.builtin").lsp_definitions, opts)
 		vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
 		vim.keymap.set("n", "<leader>@", require("telescope.builtin").lsp_document_symbols, opts)
 		vim.keymap.set("n", "<leader>a", vim.lsp.buf.code_action)
@@ -218,23 +212,6 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 require("treesitter-context").setup({ max_lines = 3, multiline_threshold = 1 })
-
--- Shims for telescope's use of old nvim-treesitter APIs that were removed in the rewrite
-do
-	local ok, ts_parsers = pcall(require, "nvim-treesitter.parsers")
-	if ok then
-		ts_parsers.ft_to_lang = ts_parsers.ft_to_lang or function(ft)
-			return vim.treesitter.language.get_lang(ft) or ft
-		end
-		ts_parsers.get_parser = ts_parsers.get_parser or function(bufnr, lang)
-			return vim.treesitter.get_parser(bufnr, lang)
-		end
-	end
-	package.loaded["nvim-treesitter.configs"] = package.loaded["nvim-treesitter.configs"] or {
-		is_enabled = function() return false end,
-		get_module = function() return {} end,
-	}
-end
 
 -- telescope
 local actions = require("telescope.actions")
@@ -342,11 +319,9 @@ vim.keymap.set("i", "<leader><Tab>", 'copilot#Accept("")', {
 -- neominimap
 vim.keymap.set("n", "<leader>m", ":Neominimap Toggle<CR>")
 
--- colorscheme (set last so highlight overrides below take effect)
-vim.cmd("colorscheme cyberdream")
-
 -- neominimap highlight overrides (must come after colorscheme)
 vim.cmd([[
+    colorscheme cyberdream
 	highlight NeominimapGitAddLine guifg=#00ff00 guibg=#004d00
 	highlight NeominimapGitChangeLine guifg=#ffff00 guibg=#4d4d00
 	highlight NeominimapGitDeleteLine guifg=#ff3333 guibg=#4d0000
