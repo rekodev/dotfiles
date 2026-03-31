@@ -122,6 +122,13 @@ vim.pack.add({
 -- mason
 require("mason").setup()
 
+require("lualine").setup({
+	sections = {
+		lualine_c = { { "filename", path = 1 } },
+		lualine_b = { { "b:gitsigns_head", icon = "" } },
+	},
+})
+
 -- LSP + cmp
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 local function setupServer(server_name)
